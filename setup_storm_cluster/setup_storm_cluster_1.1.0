@@ -1,0 +1,86 @@
+http://storm.apache.org/releases/1.2.3/Setting-up-a-Storm-cluster.html
+
+https://github.com/nathanmarz/storm-deploy/wiki
+
+1. Launch two EC2 instances
+
+2. Install zookeeper # http://zookeeper.apache.org/doc/r3.3.3/zookeeperAdmin.html#ch_deployment
+
+sudo yum install jre
+
+mkdir zk
+cd zk
+wget https://archive.apache.org/dist/zookeeper/zookeeper-3.4.9/zookeeper-3.4.9.tar.gz
+gunzip zookeeper-3.4.9.tar.gz
+tar xvf zookeeper-3.4.9.tar.gz
+
+
+cd zookeeper-3.4.9
+
+#change zoo.cfg
+
+# change myid accordingly
+sudo mkdir /var/zookeeper
+sudo chown ec2-user:ec2-user /var/zookeeper/
+vim /var/zookeeper/myid
+
+
+
+#Add zookeeper Path in .bash_profile
+
+vim ~/.bash_profile
+PATH=$PATH:$HOME/.local/bin:$HOME/bin:/home/ec2-user/zk/zookeeper-3.4.9/bin
+
+#start zookeeper server
+zkServer.sh start
+zkServer.sh status
+
+#test
+zkCli.sh
+create /test test //create folder for test
+
+3 Install storm 
+
+
+wget https://archive.apache.org/dist/storm/apache-storm-1.1.0/apache-storm-1.1.0.tar.gz
+
+tar xzvf apache-storm-1.1.0.tar.gz
+
+
+# build local dir
+sudo mkdir /var/storm
+sudo mkdir /var/storm/storm-local
+sudo chown -R ec2-user:ec2-user /var/storm
+
+
+# edit storm.yaml
+
+sudo vim conf/storm.yaml
+
+add:
+
+ storm.zookeeper.servers:
+     - "ip-172-31-13-12.ap-southeast-2.compute.internal"
+     - "ip-172-31-4-19.ap-southeast-2.compute.internal"
+ nimbus.seeds: ["ip-172-31-4-19.ap-southeast-2.compute.internal"]
+
+ storm.local.dir: "/var/storm/storm-local"
+
+ supervisor.slots.ports:
+    - 6700
+    - 6701
+    - 6702
+    - 6703
+
+
+
+#start daemon
+
+# on master
+
+storm nimbus
+storm ui
+
+# On slave
+
+storm supervisor
